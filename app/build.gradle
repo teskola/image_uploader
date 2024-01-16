@@ -1,0 +1,51 @@
+plugins {
+    id 'com.android.application'
+}
+
+def localPropertiesFile = rootProject.file("local.properties")
+def localProperties = new Properties()
+localProperties.load(new FileInputStream(localPropertiesFile))
+
+android {
+    namespace 'com.teskola.imageuploader'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.teskola.imageuploader"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        android.buildFeatures.buildConfig true
+        buildConfigField "String", "ENDPOINT", localProperties['ENDPOINT']
+        buildConfigField "String", "ACCESS_KEY", localProperties['ACCESS_KEY']
+        buildConfigField "String", "SECRET_KEY", localProperties['SECRET_KEY']
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+}
+
+dependencies {
+
+    implementation 'io.minio:minio:8.5.7'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation group: 'stax', name: 'stax', version: '1.2.0'
+
+}
+
