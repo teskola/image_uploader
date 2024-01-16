@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         action.setOnClickListener(this);
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         NotificationChannel channel = manager.getNotificationChannel("image_upload");
+
         running = !(channel == null);
         if (running) {
             action.setText("Stop");
