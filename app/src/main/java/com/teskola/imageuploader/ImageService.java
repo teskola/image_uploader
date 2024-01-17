@@ -14,7 +14,6 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -22,24 +21,24 @@ public class ImageService extends Service {
 
     final FileUploader uploader = new FileUploader();
 
-    final int INTERVAL = 1 * 60 * 1000; // Take images every minute
+    final int INTERVAL = 60 * 1000; // Take images every minute
 
     final Handler handler = new Handler();
     final Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            long now = System.currentTimeMillis();
             takePhoto(data -> {
                 try {
                     uploader.uploadPhoto(data);
                 } catch (IOException | NoSuchAlgorithmException | InvalidKeyException e) {
-                    // Stop runnable on error
-                    handler.removeCallbacks(runnable);
+                    Log.e("Error", e.toString());
+                } finally {
+                    int next = INTERVAL - (int) (System.currentTimeMillis() % (INTERVAL));
+                    handler.postDelayed(this, next);
                 }
             });
 
-            int next = INTERVAL - (int) (now % (INTERVAL));
-            handler.postDelayed(this, next);
+
         }
     };
 
@@ -55,21 +54,27 @@ public class ImageService extends Service {
         // Log.d("Camera count", String.valueOf(Camera.getNumberOfCameras()));
         try {
             camera = Camera.open(0); // Use camera 0
-            Camera.Parameters params = camera.getParameters();
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-            camera.setParameters(params);
+            try {
+                Camera.Parameters params = camera.getParameters();
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                camera.setParameters(params);
+            } catch (RuntimeException e) {
+                Log.w("Autofocus failed", e.toString());
+            }
 
             camera.setPreviewTexture(new SurfaceTexture(0));
             camera.startPreview();
 
 
             camera.takePicture(null, null, (data, camera1) -> {
+                Log.d("Camera", "Image captured.");
                 callback.onPictureTaken(data);
                 camera1.release();
             });
 
         } catch (RuntimeException | IOException e) {
             Log.e("Camera error", e.toString());
+            e.printStackTrace();
             if (camera != null) camera.release();
         }
 
@@ -92,7 +97,7 @@ public class ImageService extends Service {
         // Notification channel required for foreground service
 
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.createNotificationChannel(new NotificationChannel("image_upload", "ImageService Channel", NotificationManager.IMPORTANCE_LOW));
+        manager.createNotificationChannel(new NotificationChannel("image_upload", "ImageService Channel", NotificationManager.IMPORTANCE_DEFAULT));
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "image_upload")
                 .setContentTitle("ImageUploader")
                 .setContentText("Uploading images automatically.")
