@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.application'
 }
-
+// use local.properties for secrets
 def localPropertiesFile = rootProject.file("local.properties")
 def localProperties = new Properties()
 localProperties.load(new FileInputStream(localPropertiesFile))
@@ -12,12 +12,13 @@ android {
 
     defaultConfig {
         applicationId "com.teskola.imageuploader"
-        minSdk 26
+        minSdk 26 // Android Oreo (8.0) required for java.lang.invoke.methodhandles in min.io SDK
         targetSdk 34
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         android.buildFeatures.buildConfig true
+        // Add ENDPOINT, ACCESS_KEY, SECRET_KEY to local.properties
         buildConfigField "String", "ENDPOINT", localProperties['ENDPOINT']
         buildConfigField "String", "ACCESS_KEY", localProperties['ACCESS_KEY']
         buildConfigField "String", "SECRET_KEY", localProperties['SECRET_KEY']
@@ -31,21 +32,21 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
 dependencies {
 
-    implementation 'io.minio:minio:8.5.7'
+    implementation 'io.minio:minio:8.5.7' // latest min.io version
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    implementation group: 'stax', name: 'stax', version: '1.2.0'
+    implementation group: 'stax', name: 'stax', version: '1.2.0' // needed for min.io
 
 }
 

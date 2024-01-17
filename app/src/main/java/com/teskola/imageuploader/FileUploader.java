@@ -9,6 +9,7 @@ import io.minio.errors.MinioException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -19,13 +20,14 @@ import java.util.TimeZone;
 
 public class FileUploader {
 
+    // Timeformat for file name HHmm.jpg
     final SimpleDateFormat sdf = new SimpleDateFormat("HHmm", Locale.getDefault());
 
     /*
         Upload picture to Min.io database
      */
     void uploadPhoto(byte[] data)
-            throws IOException, NoSuchAlgorithmException, InvalidKeyException {
+            throws IOException, NoSuchAlgorithmException, InvalidKeyException, ConnectException {
         try {
             MinioClient minioClient =
                     MinioClient.builder()
@@ -38,7 +40,6 @@ public class FileUploader {
             int currentYear = calendar.get(Calendar.YEAR);
             int currentMonth = calendar.get(Calendar.MONTH) + 1;
             int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
-            Log.d("Data length", String.valueOf(data.length));
             ObjectWriteResponse response = minioClient.putObject(PutObjectArgs.builder()
                     .bucket("phone")
                     .object(currentYear + "/" + currentMonth + "/" + currentDay + "/" + formattedTime + ".jpg")
@@ -46,6 +47,8 @@ public class FileUploader {
                     .stream(new ByteArrayInputStream(data), data.length, -1)
                     .build());
             Log.d("File uploaded", response.object());
+        } catch (ConnectException e) {
+            Log.e("Error", e.toString());
         } catch (MinioException e) {
             Log.e("Error", e.toString());
             Log.e("HTTP trace", e.httpTrace());
