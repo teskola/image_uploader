@@ -27,6 +27,7 @@ public class ImageService extends Service {
     final Runnable runnable = new Runnable() {
         @Override
         public void run() {
+            Log.d("Image service", "tick");
             takePhoto(data -> {
                 try {
                     uploader.uploadPhoto(data);

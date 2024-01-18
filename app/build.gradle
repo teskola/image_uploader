@@ -14,7 +14,7 @@ android {
         applicationId "com.teskola.imageuploader"
         minSdk 26 // Android Oreo (8.0) required for java.lang.invoke.methodhandles in min.io SDK
         targetSdk 34
-        versionCode 1
+        versionCode 3
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         android.buildFeatures.buildConfig true
