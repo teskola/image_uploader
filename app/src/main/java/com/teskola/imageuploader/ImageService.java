@@ -21,21 +21,21 @@ public class ImageService extends Service {
 
     final FileUploader uploader = new FileUploader();
 
-    final int INTERVAL = 60 * 1000; // Take images every minute
+    final int INTERVAL = 60 * 60 * 1000; // Take a image every hour
 
     final Handler handler = new Handler();
     final Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            Log.d("Image service", "tick");
+            Log.d("ImageService", "tick");
             takePhoto(data -> {
                 try {
+                    Log.d("ImageService", "Upload to database");
                     uploader.uploadPhoto(data);
                 } catch (IOException | NoSuchAlgorithmException | InvalidKeyException e) {
                     Log.e("Error", e.toString());
                 } finally {
-                    int next = INTERVAL - (int) (System.currentTimeMillis() % (INTERVAL));
-                    handler.postDelayed(this, next);
+                    scheduleNext();
                 }
             });
 
@@ -47,6 +47,16 @@ public class ImageService extends Service {
         void onPictureTaken(byte[] data);
     }
 
+    private void scheduleNext() {
+        int next = next();
+        Log.d("ImageService", "Next image scheduled in: " + next/1000 + " seconds.");
+        handler.postDelayed(runnable, next);
+    }
+
+    private int next() {
+        return INTERVAL - (int) (System.currentTimeMillis() % (INTERVAL));
+    }
+
     // https://stackoverflow.com/questions/14277981/android-is-it-possible-to-take-a-picture-with-the-camera-from-a-service-with-no
 
     private void takePhoto(Callback callback) {
@@ -55,26 +65,27 @@ public class ImageService extends Service {
         // Log.d("Camera count", String.valueOf(Camera.getNumberOfCameras()));
         try {
             camera = Camera.open(0); // Use camera 0
+            Log.d("ImageService", "Camera found.");
             try {
                 Camera.Parameters params = camera.getParameters();
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
                 camera.setParameters(params);
+                Log.d("Camera", "Autofocus set.");
             } catch (RuntimeException e) {
                 Log.w("Autofocus failed", e.toString());
             }
 
             camera.setPreviewTexture(new SurfaceTexture(0));
             camera.startPreview();
-
-
+            Log.d("Camera", "Taking picture");
             camera.takePicture(null, null, (data, camera1) -> {
+                camera1.release();
                 Log.d("Camera", "Image captured.");
                 callback.onPictureTaken(data);
-                camera1.release();
             });
 
         } catch (RuntimeException | IOException e) {
-            Log.e("Camera error", e.toString());
+            Log.e("Camera", e.toString());
             e.printStackTrace();
             if (camera != null) camera.release();
         }
@@ -86,11 +97,12 @@ public class ImageService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
         Log.d("ImageService", "Start");
-        handler.postDelayed(runnable, 0);
+        scheduleNext();
         return START_STICKY;
     }
+
+
 
     @Override
     public void onCreate() {
@@ -98,7 +110,9 @@ public class ImageService extends Service {
         // Notification channel required for foreground service
 
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.createNotificationChannel(new NotificationChannel("image_upload", "ImageService Channel", NotificationManager.IMPORTANCE_DEFAULT));
+        // Max importance to avoid service from shutting down
+        // TODO: counter to next capture, timestamp of previous
+        manager.createNotificationChannel(new NotificationChannel("image_upload", "ImageService Channel", NotificationManager.IMPORTANCE_MAX));
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "image_upload")
                 .setContentTitle("ImageUploader")
                 .setContentText("Uploading images automatically.")
@@ -109,8 +123,6 @@ public class ImageService extends Service {
     @Override
     public void onDestroy() {
         Log.d("ImageService", "Stop");
-        stopForeground(STOP_FOREGROUND_REMOVE);
-        handler.removeCallbacks(runnable);
         super.onDestroy();
     }
 

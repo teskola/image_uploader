@@ -30,6 +30,7 @@ public class FileUploader {
     void uploadPhoto(byte[] data)
             throws IOException, NoSuchAlgorithmException, InvalidKeyException {
         try {
+            Log.d("FileUploader", "Connect to database");
             MinioClient minioClient =
                     MinioClient.builder()
                             .endpoint(BuildConfig.ENDPOINT)
@@ -41,6 +42,7 @@ public class FileUploader {
             int currentYear = calendar.get(Calendar.YEAR);
             int currentMonth = calendar.get(Calendar.MONTH) + 1;
             int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
+            Log.d("FileUploader", "Uploading...");
             ObjectWriteResponse response = minioClient.putObject(PutObjectArgs.builder()
                     .bucket("phone")
                     .object(currentYear + "/" + currentMonth + "/" + currentDay + "/" + formattedTime + ".jpg")
