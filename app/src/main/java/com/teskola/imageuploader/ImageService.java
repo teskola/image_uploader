@@ -24,23 +24,20 @@ public class ImageService extends Service {
     final int INTERVAL = 60 * 60 * 1000; // Take a image every hour
 
     final Handler handler = new Handler();
-    final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            Log.d("ImageService", "tick");
-            takePhoto(data -> {
-                try {
-                    Log.d("ImageService", "Upload to database");
-                    uploader.uploadPhoto(data);
-                } catch (IOException | NoSuchAlgorithmException | InvalidKeyException e) {
-                    Log.e("Error", e.toString());
-                } finally {
-                    scheduleNext();
-                }
-            });
+    final Runnable runnable = () -> {
+        // TODO: create new notification
+        scheduleNext();
+        Log.d("ImageService", "tick");
+        takePhoto(data -> {
+            try {
+                Log.d("ImageService", "Upload to database");
+                uploader.uploadPhoto(data);
+            } catch (IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+                Log.e("Error", e.toString());
+            }
+        });
 
 
-        }
     };
 
     public interface Callback {
@@ -112,11 +109,13 @@ public class ImageService extends Service {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         // Max importance to avoid service from shutting down
         // TODO: counter to next capture, timestamp of previous
-        manager.createNotificationChannel(new NotificationChannel("image_upload", "ImageService Channel", NotificationManager.IMPORTANCE_MAX));
+        manager.createNotificationChannel(new NotificationChannel("image_upload", "ImageService Channel", NotificationManager.IMPORTANCE_HIGH));
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "image_upload")
                 .setContentTitle("ImageUploader")
                 .setContentText("Uploading images automatically.")
-                .setSmallIcon(R.mipmap.ic_launcher);
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setOngoing(true);
+
         startForeground(100, builder.build());
     }
 
