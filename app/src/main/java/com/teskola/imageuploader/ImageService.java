@@ -9,6 +9,7 @@ import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -25,7 +26,6 @@ public class ImageService extends Service {
 
     final Handler handler = new Handler();
     final Runnable runnable = () -> {
-        // TODO: create new notification
         scheduleNext();
         Log.d("ImageService", "tick");
         takePhoto(data -> {
@@ -47,6 +47,7 @@ public class ImageService extends Service {
     private void scheduleNext() {
         int next = next();
         Log.d("ImageService", "Next image scheduled in: " + next/1000 + " seconds.");
+        aquireWakeLock(next);
         handler.postDelayed(runnable, next);
     }
 
@@ -99,6 +100,16 @@ public class ImageService extends Service {
         return START_STICKY;
     }
 
+    /*
+    * Use wakelock to keep cpu (and service) running.
+     */
+    private void aquireWakeLock(long timeout) {
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "MyApp::MyWakelockTag");
+        wakeLock.acquire(timeout);
+    }
+
 
 
     @Override
@@ -109,7 +120,7 @@ public class ImageService extends Service {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         // Max importance to avoid service from shutting down
         // TODO: counter to next capture, timestamp of previous
-        manager.createNotificationChannel(new NotificationChannel("image_upload", "ImageService Channel", NotificationManager.IMPORTANCE_HIGH));
+        manager.createNotificationChannel(new NotificationChannel("image_upload", "ImageService Channel", NotificationManager.IMPORTANCE_LOW));
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "image_upload")
                 .setContentTitle("ImageUploader")
                 .setContentText("Uploading images automatically.")
@@ -122,6 +133,7 @@ public class ImageService extends Service {
     @Override
     public void onDestroy() {
         Log.d("ImageService", "Stop");
+        handler.removeCallbacks(runnable);
         super.onDestroy();
     }
 

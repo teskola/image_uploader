@@ -14,8 +14,8 @@ android {
         applicationId "com.teskola.imageuploader"
         minSdk 26 // Android Oreo (8.0) required for java.lang.invoke.methodhandles in min.io SDK
         targetSdk 34
-        versionCode 4
-        versionName "1.0"
+        versionCode 6
+        versionName "1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         android.buildFeatures.buildConfig true
         // Add ENDPOINT, ACCESS_KEY, SECRET_KEY to local.properties
@@ -47,6 +47,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation group: 'stax', name: 'stax', version: '1.2.0' // needed for min.io
+    implementation 'com.android.volley:volley:1.2.1'
+
 
 }
 
